@@ -1,6 +1,7 @@
 import json
 import time
 import os
+from datetime import datetime
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 from faker import Faker
@@ -34,17 +35,28 @@ def generate_pedido_data():
         'cliente_id': fake.random_int(min=1, max=100)
     }
 
+def is_lunch_time():
+    """Verifica se está no horário de almoço (11h às 15h)"""
+    current_hour = datetime.now().hour
+    return 11 <= current_hour < 15
+
 def main():
     print("Iniciando producer...")
     producer = create_producer()
     print("Producer conectado ao Kafka!")
+    print("Gerando pedidos apenas no horário de almoço (11h às 15h)")
     
     while True:
         try:
-            pedido_data = generate_pedido_data()
-            producer.send('pedidos', pedido_data)
-            print(f"Pedido enviado: {pedido_data}")
-            time.sleep(10)
+            if is_lunch_time():
+                pedido_data = generate_pedido_data()
+                producer.send('pedidos', pedido_data)
+                print(f"Pedido enviado: {pedido_data}")
+                time.sleep(10)
+            else:
+                current_hour = datetime.now().hour
+                print(f"Fora do horário de almoço (atual: {current_hour}h). Aguardando...")
+                time.sleep(60)  # Verifica a cada minuto
         except Exception as e:
             print(f"Erro ao enviar dados: {e}")
             time.sleep(5)

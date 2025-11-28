@@ -4,7 +4,8 @@ import psycopg2
 from datetime import datetime, timedelta
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import sum as spark_sum, count, desc, col
+from pyspark.sql.functions import sum as spark_sum, count, desc, col, from_json, window
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType
 
 def get_db_connection():
     retries = 5
@@ -21,55 +22,42 @@ def get_db_connection():
     raise Exception("Não foi possível conectar ao PostgreSQL")
 
 def create_spark_session():
+    jars = "/opt/postgresql-42.7.0.jar,/opt/kafka-clients-3.5.0.jar,/opt/spark-sql-kafka-0-10_2.12-3.5.0.jar"
     return SparkSession.builder \
         .appName("RestauranteAnalytics") \
-        .config("spark.driver.extraClassPath", "/opt/postgresql-42.7.0.jar") \
-        .config("spark.executor.extraClassPath", "/opt/postgresql-42.7.0.jar") \
+        .config("spark.jars", jars) \
+        .config("spark.driver.extraClassPath", jars) \
+        .config("spark.executor.extraClassPath", jars) \
         .config("spark.sql.adaptive.enabled", "false") \
         .config("spark.driver.memory", "1g") \
+        .config("spark.sql.streaming.checkpointLocation", "/tmp/checkpoint") \
         .getOrCreate()
 
-def generate_report():
-    spark = create_spark_session()
-    
-    # Configuração do PostgreSQL
-    jdbc_url = f"jdbc:postgresql://{os.getenv('POSTGRES_HOST', 'localhost')}:5432/{os.getenv('POSTGRES_DB', 'datastore')}"
-    properties = {
-        "user": os.getenv('POSTGRES_USER', 'admin'),
-        "password": os.getenv('POSTGRES_PASSWORD', 'password'),
-        "driver": "org.postgresql.Driver"
-    }
-    
-    # Ler dados dos últimos 1 minuto
-    one_minute_ago = (datetime.now() - timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
-    
-    query = f"""
-    (SELECT nome_prato, preco, quantidade, cliente_id, created_at 
-     FROM pedidos 
-     WHERE created_at >= '{one_minute_ago}') as pedidos_recentes
-    """
-    
+def save_to_postgres(df, epoch_id):
+    """Salva dados processados no PostgreSQL"""
     try:
-        df = spark.read.jdbc(jdbc_url, query, properties=properties)
+        # Converter para Pandas para facilitar inserção
+        pandas_df = df.toPandas()
         
-        if df.count() == 0:
-            print("Nenhum pedido nos últimos 1 minuto")
+        if len(pandas_df) == 0:
+            print(f"Batch {epoch_id}: Nenhum dado para processar")
             return
         
-        # Calcular métricas
-        total_vendas = df.select(spark_sum(col("preco") * col("quantidade")).alias("total")).collect()[0]["total"]
-        quantidade_total = df.select(spark_sum("quantidade").alias("total_qty")).collect()[0]["total_qty"]
-        ticket_medio = total_vendas / df.select("cliente_id").distinct().count() if df.select("cliente_id").distinct().count() > 0 else 0
-        
-        # Prato mais vendido
-        prato_mais_vendido = df.groupBy("nome_prato") \
-            .agg(spark_sum("quantidade").alias("total_qty")) \
-            .orderBy(desc("total_qty")) \
-            .first()["nome_prato"]
-        
-        # Salvar relatório
         conn = get_db_connection()
         cursor = conn.cursor()
+        
+        for _, row in pandas_df.iterrows():
+            # Inserir pedido individual
+            cursor.execute("""
+                INSERT INTO pedidos (nome_prato, preco, quantidade, cliente_id, created_at)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (row['nome_prato'], row['preco'], row['quantidade'], row['cliente_id'], datetime.now()))
+        
+        # Calcular e inserir relatório agregado
+        total_vendas = (pandas_df['preco'] * pandas_df['quantidade']).sum()
+        quantidade_total = pandas_df['quantidade'].sum()
+        ticket_medio = total_vendas / pandas_df['cliente_id'].nunique() if pandas_df['cliente_id'].nunique() > 0 else 0
+        prato_mais_vendido = pandas_df.groupby('nome_prato')['quantidade'].sum().idxmax()
         
         cursor.execute("""
             INSERT INTO relatorio_vendas (periodo, total_vendas, prato_mais_vendido, quantidade_total, ticket_medio)
@@ -80,24 +68,55 @@ def generate_report():
         cursor.close()
         conn.close()
         
-        print(f"Relatório gerado - Total: R${total_vendas:.2f}, Prato mais vendido: {prato_mais_vendido}")
+        print(f"Batch {epoch_id}: {len(pandas_df)} pedidos processados - Total: R${total_vendas:.2f}")
         
     except Exception as e:
-        print(f"Erro ao gerar relatório: {e}")
-    
-    spark.stop()
+        print(f"Erro ao salvar batch {epoch_id}: {e}")
+
+def is_lunch_time():
+    """Verifica se está no horário de almoço (11h às 15h)"""
+    current_hour = datetime.now().hour
+    return 11 <= current_hour < 15
 
 def main():
-    print("Spark Analytics iniciado - Gerando relatórios a cada 1 minuto")
-    time.sleep(30)  # Aguarda dados iniciais
+    print("Spark Streaming Analytics iniciado - Consumindo diretamente do Kafka")
+    print("Processando apenas no horário de almoço (11h às 15h)")
     
-    while True:
-        try:
-            generate_report()
-            time.sleep(60)  # 1 minuto
-        except Exception as e:
-            print(f"Erro no processamento: {e}")
-            time.sleep(60)
+    spark = create_spark_session()
+    
+    # Schema dos dados do Kafka
+    schema = StructType([
+        StructField("nome_prato", StringType(), True),
+        StructField("preco", DoubleType(), True),
+        StructField("quantidade", IntegerType(), True),
+        StructField("cliente_id", IntegerType(), True)
+    ])
+    
+    # Ler stream do Kafka
+    kafka_df = spark.readStream \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:29092')) \
+        .option("subscribe", "pedidos") \
+        .option("startingOffsets", "latest") \
+        .load()
+    
+    # Processar dados JSON
+    pedidos_df = kafka_df.select(
+        from_json(col("value").cast("string"), schema).alias("data")
+    ).select("data.*")
+    
+    # Configurar stream para processar em micro-batches
+    query = pedidos_df.writeStream \
+        .foreachBatch(save_to_postgres) \
+        .trigger(processingTime='60 seconds') \
+        .start()
+    
+    try:
+        query.awaitTermination()
+    except KeyboardInterrupt:
+        print("Parando Spark Streaming...")
+        query.stop()
+        spark.stop()
 
 if __name__ == "__main__":
     main()

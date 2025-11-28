@@ -13,10 +13,11 @@
 ### Bibliotecas Python
 | Biblioteca | Versão | Uso | Instalação |
 |------------|--------|-----|------------|
-| kafka-python | 2.0.2 | Cliente Kafka | pip install |
+| kafka-python | 2.0.2 | Cliente Kafka (Producer) | pip install |
 | psycopg2-binary | 2.9.7 | Driver PostgreSQL | pip install |
 | faker | 19.6.2 | Geração de dados | pip install |
-| pyspark | 3.5.0 | Processamento distribuído | pip install |
+| pyspark | 3.5.0 | Spark Streaming + Analytics | pip install |
+| pandas | 2.0+ | Processamento de dados | pip install |
 
 ### Dependências de Sistema
 | Componente | Versão Mínima | Uso |
@@ -81,8 +82,7 @@ POSTGRES_PASSWORD=password
 
 ### Comunicação Interna
 - **Producer → Kafka**: kafka:29092
-- **Consumer → Kafka**: kafka:29092
-- **Consumer → PostgreSQL**: postgres:5432
+- **Spark → Kafka**: kafka:29092
 - **Spark → PostgreSQL**: postgres:5432
 
 ### Comunicação Externa
@@ -95,8 +95,7 @@ POSTGRES_PASSWORD=password
 2. **Kafka** - Sistema de streaming
 3. **db-init** - Inicialização das tabelas
 4. **Producer** - Geração de dados
-5. **Consumer** - Processamento de mensagens
-6. **Spark Analytics** - Processamento analítico
+5. **Spark Streaming** - Consumo do Kafka + processamento analítico
 
 ## Recursos de Sistema
 

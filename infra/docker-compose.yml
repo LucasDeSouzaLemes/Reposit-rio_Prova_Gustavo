@@ -39,13 +39,8 @@ services:
       dockerfile: infra/Dockerfile
     depends_on:
       - kafka
-      - postgres
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: datastore
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
     command: python src/producer.py
     restart: unless-stopped
 
@@ -63,31 +58,16 @@ services:
     command: sh -c "sleep 10 && python src/database.py"
     restart: "no"
 
-  consumer:
+  spark-analytics:
     build:
       context: ..
-      dockerfile: infra/Dockerfile
+      dockerfile: infra/Dockerfile.spark
     depends_on:
       - kafka
       - postgres
       - db-init
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: datastore
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
-    command: python src/consumer.py
-    restart: unless-stopped
-
-  spark-analytics:
-    build:
-      context: ..
-      dockerfile: infra/Dockerfile.spark
-    depends_on:
-      - postgres
-      - db-init
-    environment:
       POSTGRES_HOST: postgres
       POSTGRES_DB: datastore
       POSTGRES_USER: admin

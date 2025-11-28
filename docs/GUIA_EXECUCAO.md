@@ -53,7 +53,6 @@ NAME                    STATUS
 infra-kafka-1          Up
 infra-postgres-1       Up
 infra-producer-1       Up
-infra-consumer-1       Up
 infra-spark-analytics-1 Up
 infra-db-init-1        Exited (0)
 ```
@@ -65,7 +64,6 @@ docker-compose logs -f
 
 # Serviço específico
 docker-compose logs -f producer
-docker-compose logs -f consumer
 docker-compose logs -f spark-analytics
 ```
 
@@ -77,11 +75,11 @@ docker-compose logs producer | tail -10
 ```
 **Deve mostrar**: Pedidos sendo enviados a cada 10 segundos
 
-### 2. Verificar Processamento
+### 2. Verificar Processamento Spark
 ```bash
-docker-compose logs consumer | tail -10
+docker-compose logs spark-analytics | tail -10
 ```
-**Deve mostrar**: Pedidos sendo salvos no banco
+**Deve mostrar**: Pedidos sendo processados e salvos
 
 ### 3. Verificar Analytics
 ```bash

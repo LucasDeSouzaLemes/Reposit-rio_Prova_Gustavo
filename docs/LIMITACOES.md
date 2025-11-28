@@ -4,7 +4,7 @@
 
 ### 1. Dependências de Inicialização
 **Problema**: Ordem de inicialização dos containers
-- Kafka precisa estar pronto antes do Producer/Consumer
+- Kafka precisa estar pronto antes do Producer/Spark
 - PostgreSQL precisa estar pronto antes do db-init
 
 **Impacto**: Falhas de conexão durante startup
@@ -126,9 +126,9 @@
 ## Limitações de Negócio
 
 ### 1. Tempo Real
-**Limitação**: Latência de ~1 minuto para relatórios
-**Impacto**: Não é verdadeiro tempo real
-**Solução**: Streaming analytics com menor janela
+**Limitação**: Micro-batches de 60 segundos no Spark Streaming
+**Impacto**: Latência mínima de 1 minuto para relatórios
+**Solução**: Reduzir janela de processamento para 10-30 segundos
 
 ### 2. Análises Básicas
 **Limitação**: KPIs simples apenas

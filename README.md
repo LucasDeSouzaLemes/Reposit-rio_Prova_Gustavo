@@ -5,16 +5,15 @@ Pipeline completo de dados em tempo real para análise de vendas de restaurante 
 ## 🏗️ Arquitetura
 
 ```
-Producer → Kafka → Consumer → PostgreSQL
-                      ↓
-                 Spark Analytics → Relatórios
+Producer → Kafka → Spark Streaming → PostgreSQL
+                        ↓
+                   Relatórios
 ```
 
 ### Componentes:
-- **Producer**: Gera pedidos de restaurante a cada 10 segundos
+- **Producer**: Gera pedidos de restaurante a cada 10 segundos (11h às 15h)
 - **Kafka**: Streaming de mensagens (modo KRaft, sem Zookeeper)
-- **Consumer**: Consome pedidos do Kafka e salva no PostgreSQL
-- **Spark Analytics**: Processa dados e gera relatórios a cada 1 minuto
+- **Spark Streaming**: Consome diretamente do Kafka, processa e salva no PostgreSQL
 - **PostgreSQL**: Armazena pedidos e relatórios
 
 ## 🚀 Como executar
@@ -34,10 +33,7 @@ docker-compose up --build -d
 # Ver pedidos sendo gerados
 docker-compose logs -f producer
 
-# Ver pedidos sendo salvos
-docker-compose logs -f consumer
-
-# Ver relatórios do Spark
+# Ver processamento do Spark Streaming
 docker-compose logs -f spark-analytics
 ```
 

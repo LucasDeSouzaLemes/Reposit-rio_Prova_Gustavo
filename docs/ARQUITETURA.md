@@ -9,10 +9,9 @@ O sistema implementa um pipeline de dados em tempo real para análise de vendas 
 ```mermaid
 graph TD
     A[Producer] -->|Pedidos JSON| B[Apache Kafka]
-    B -->|Stream| C[Consumer]
-    C -->|INSERT| D[PostgreSQL - Tabela Pedidos]
-    D -->|SELECT| E[Apache Spark]
-    E -->|Relatórios| F[PostgreSQL - Tabela Relatórios]
+    B -->|Spark Streaming| C[Apache Spark]
+    C -->|INSERT| D[PostgreSQL - Pedidos]
+    C -->|INSERT| E[PostgreSQL - Relatórios]
     
     subgraph "Camada de Ingestão"
         A
@@ -21,12 +20,11 @@ graph TD
     
     subgraph "Camada de Processamento"
         C
-        E
     end
     
     subgraph "Camada de Armazenamento"
         D
-        F
+        E
     end
 ```
 
@@ -37,19 +35,18 @@ graph TD
 - **Apache Kafka**: Sistema de streaming distribuído (modo KRaft)
 
 ### 2. Camada de Processamento
-- **Consumer**: Processa mensagens do Kafka e persiste no banco
-- **Apache Spark**: Engine de processamento distribuído para analytics
+- **Apache Spark Streaming**: Consome diretamente do Kafka e processa dados em tempo real
 
 ### 3. Camada de Armazenamento
 - **PostgreSQL**: Banco relacional para dados transacionais e analíticos
 
 ## Fluxo de Dados
 
-1. **Ingestão**: Producer gera pedidos a cada 10 segundos
-2. **Streaming**: Kafka distribui mensagens para consumers
-3. **Persistência**: Consumer salva pedidos no PostgreSQL
-4. **Analytics**: Spark processa dados a cada 1 minuto
-5. **Relatórios**: Spark gera insights e salva relatórios
+1. **Ingestão**: Producer gera pedidos a cada 10 segundos (11h às 15h)
+2. **Streaming**: Kafka armazena mensagens em tópicos
+3. **Processamento**: Spark Streaming consome diretamente do Kafka
+4. **Persistência**: Spark salva pedidos individuais no PostgreSQL
+5. **Analytics**: Spark gera relatórios agregados em micro-batches de 60s
 
 ## Decisões Técnicas
 
@@ -71,6 +68,13 @@ graph TD
 - **Orquestração**: Docker Compose para desenvolvimento
 - **Rede**: Bridge network para comunicação entre containers
 - **Volumes**: Persistência de dados PostgreSQL
+
+## Vantagens da Nova Arquitetura
+
+- **Menor Latência**: Processamento direto do stream sem intermediários
+- **Menos Componentes**: Arquitetura simplificada (sem consumer separado)
+- **Streaming Real**: Verdadeiro processamento em tempo real
+- **Menos Pontos de Falha**: Redução de componentes críticos
 
 ## Escalabilidade
 
