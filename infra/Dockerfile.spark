@@ -15,8 +15,10 @@ RUN pip3 install --break-system-packages pyspark==3.5.0 psycopg2-binary pandas
 
 # Baixar drivers
 RUN wget -O /opt/postgresql-42.7.0.jar https://jdbc.postgresql.org/download/postgresql-42.7.0.jar
-RUN wget -O /opt/kafka-clients-3.5.0.jar https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.5.0/kafka-clients-3.5.0.jar
 RUN wget -O /opt/spark-sql-kafka-0-10_2.12-3.5.0.jar https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.0/spark-sql-kafka-0-10_2.12-3.5.0.jar
+RUN wget -O /opt/kafka-clients-3.5.0.jar https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.5.0/kafka-clients-3.5.0.jar
+RUN wget -O /opt/spark-token-provider-kafka-0-10_2.12-3.5.0.jar https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_2.12/3.5.0/spark-token-provider-kafka-0-10_2.12-3.5.0.jar
+RUN wget -O /opt/commons-pool2-2.11.1.jar https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar
 
 WORKDIR /app
 COPY src/spark_processor.py ./src/

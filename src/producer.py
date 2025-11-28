@@ -44,11 +44,18 @@ def main():
     print("Iniciando producer...")
     producer = create_producer()
     print("Producer conectado ao Kafka!")
-    print("Gerando pedidos apenas no horário de almoço (11h às 15h)")
+    
+    # Modo de teste - sempre gera pedidos para demonstração
+    test_mode = True
+    
+    if test_mode:
+        print("MODO DE TESTE: Gerando pedidos independente do horário")
+    else:
+        print("Gerando pedidos apenas no horário de almoço (11h às 15h)")
     
     while True:
         try:
-            if is_lunch_time():
+            if test_mode or is_lunch_time():
                 pedido_data = generate_pedido_data()
                 producer.send('pedidos', pedido_data)
                 print(f"Pedido enviado: {pedido_data}")

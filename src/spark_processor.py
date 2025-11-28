@@ -22,7 +22,7 @@ def get_db_connection():
     raise Exception("Não foi possível conectar ao PostgreSQL")
 
 def create_spark_session():
-    jars = "/opt/postgresql-42.7.0.jar,/opt/kafka-clients-3.5.0.jar,/opt/spark-sql-kafka-0-10_2.12-3.5.0.jar"
+    jars = "/opt/postgresql-42.7.0.jar,/opt/spark-sql-kafka-0-10_2.12-3.5.0.jar,/opt/kafka-clients-3.5.0.jar,/opt/spark-token-provider-kafka-0-10_2.12-3.5.0.jar,/opt/commons-pool2-2.11.1.jar"
     return SparkSession.builder \
         .appName("RestauranteAnalytics") \
         .config("spark.jars", jars) \
@@ -80,7 +80,14 @@ def is_lunch_time():
 
 def main():
     print("Spark Streaming Analytics iniciado - Consumindo diretamente do Kafka")
-    print("Processando apenas no horário de almoço (11h às 15h)")
+    
+    # Modo de teste - sempre processa para demonstração
+    test_mode = True
+    
+    if test_mode:
+        print("MODO DE TESTE: Processando independente do horário")
+    else:
+        print("Processando apenas no horário de almoço (11h às 15h)")
     
     spark = create_spark_session()
     
