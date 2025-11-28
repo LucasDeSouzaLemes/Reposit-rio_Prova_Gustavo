@@ -79,10 +79,3 @@ docker-compose logs -f
 # 4. Consultar dados
 docker-compose exec postgres psql -U admin -d datastore
 ```
-
-## Contato e Suporte
-
-Para dúvidas sobre a documentação ou implementação, consulte:
-- [Issues do repositório](link-para-issues)
-- [Wiki do projeto](link-para-wiki)
-- Contato da equipe: [emails]
