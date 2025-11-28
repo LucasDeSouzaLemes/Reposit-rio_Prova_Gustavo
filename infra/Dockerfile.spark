@@ -14,6 +14,6 @@ RUN pip3 install --break-system-packages pyspark==3.5.0 psycopg2-binary
 RUN wget -O /opt/postgresql-42.7.0.jar https://jdbc.postgresql.org/download/postgresql-42.7.0.jar
 
 WORKDIR /app
-COPY spark_processor.py .
+COPY src/spark_processor.py ./src/
 
-CMD ["python3", "spark_processor.py"]
+CMD ["python3", "src/spark_processor.py"]

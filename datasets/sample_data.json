@@ -1,0 +1,62 @@
+[
+  {
+    "nome_prato": "Pizza Margherita",
+    "preco": 45.90,
+    "quantidade": 2,
+    "cliente_id": 73
+  },
+  {
+    "nome_prato": "Hambúrguer Artesanal",
+    "preco": 32.50,
+    "quantidade": 1,
+    "cliente_id": 45
+  },
+  {
+    "nome_prato": "Lasanha Bolonhesa",
+    "preco": 38.00,
+    "quantidade": 3,
+    "cliente_id": 12
+  },
+  {
+    "nome_prato": "Salmão Grelhado",
+    "preco": 65.00,
+    "quantidade": 1,
+    "cliente_id": 89
+  },
+  {
+    "nome_prato": "Risotto de Camarão",
+    "preco": 58.90,
+    "quantidade": 2,
+    "cliente_id": 34
+  },
+  {
+    "nome_prato": "Frango à Parmegiana",
+    "preco": 42.00,
+    "quantidade": 1,
+    "cliente_id": 67
+  },
+  {
+    "nome_prato": "Massa Carbonara",
+    "preco": 35.50,
+    "quantidade": 2,
+    "cliente_id": 23
+  },
+  {
+    "nome_prato": "Picanha na Chapa",
+    "preco": 78.00,
+    "quantidade": 1,
+    "cliente_id": 56
+  },
+  {
+    "nome_prato": "Salada Caesar",
+    "preco": 28.90,
+    "quantidade": 1,
+    "cliente_id": 91
+  },
+  {
+    "nome_prato": "Sushi Combo",
+    "preco": 85.00,
+    "quantidade": 1,
+    "cliente_id": 18
+  }
+]

@@ -19,7 +19,12 @@ Producer → Kafka → Consumer → PostgreSQL
 
 ## 🚀 Como executar
 
-1. **Iniciar o sistema:**
+1. **Navegar para pasta de infraestrutura:**
+```bash
+cd infra
+```
+
+2. **Iniciar o sistema:**
 ```bash
 docker-compose up --build -d
 ```
